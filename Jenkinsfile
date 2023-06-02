@@ -1,22 +1,21 @@
-#!groovy
 //  groovy Jenkinsfile
 properties([disableConcurrentBuilds()])
 
-pipeline  {
-        agent { 
-           label ''
-        }
+pipeline {
+    agent {
+        label ''
+    }
 
     options {
         buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '10'))
         timestamps()
     }
+
     stages {
-        
-  stage("Run zabbix-agent") {
+        stage("Run zabbix-agent") {
             steps {
                 echo 'Running zabbix-agent service ...'
-                sh "docker run -d --name zabbix-agent -p 161:161/udp  kuzma343/zabbix-agent:alpine-6.2-latest"
+                sh "docker run -d --name zabbix-agent -p 161:161/udp kuzma343/zabbix-agent:alpine-6.2-latest"
             }
         }
 
@@ -51,6 +50,7 @@ pipeline  {
                 }
             }
         }
+
         stage("docker push") {
             steps {
                 echo " ============== pushing image =================="
@@ -59,22 +59,25 @@ pipeline  {
                 '''
             }
         }
+
         stage("docker stop") {
             steps {
                 echo " ============== stopping all images =================="
                 sh '''
-                docker stop zabbixrepo
+                docker stop website
                 '''
             }
-        } 
+        }
+
         stage("docker remove") {
             steps {
                 echo " ============== removing all docker containers =================="
                 sh '''
-                docker rm  zabbixrepo 
+                docker rm website
                 '''
             }
         }
+
         stage("docker run") {
             steps {
                 echo " ============== start server =================="
@@ -85,3 +88,4 @@ pipeline  {
         }
     }
 }
+
