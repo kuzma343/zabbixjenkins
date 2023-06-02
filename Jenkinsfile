@@ -1,18 +1,8 @@
-//  groovy Jenkinsfile
-properties([disableConcurrentBuilds()])
-
 pipeline {
-    agent {
-        label ''
-    }
-
-    options {
-        buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '10'))
-        timestamps()
-    }
-
-  
-      stage('Build') {
+    agent any
+    
+    stages {
+        stage('Build') {
             steps {
                 sh 'docker rm -f zabbix-agent' // Видалення попереднього контейнера з назвою "zabbix-agent"
                 sh 'docker run -d --name zabbix-agent -p 161:161/udp -p 10050:10050 -p 1099:1099 -p 9999:9999 kuzma343/zabbix-agent:alpine-6.2-latest'
@@ -25,6 +15,8 @@ pipeline {
             }
         }
     }
+}
+
 
 
 
