@@ -13,74 +13,33 @@ pipeline  {
     }
     stages {
         
-stage("Run docker zabbix-agent") {
-steps {
-echo 'Running docker container...'
-sh '''
-docker run -d
---name zabbix-agent
--p 161:161/udp
--p 10050:10050
--p 1099:1099
--p 9999:9999
-kuzma343/zabbix-agent:alpine-6.2-latest
-'''
-}
-}
-      stage("Create docker zabbix-agent") {
-steps {
-echo 'Creating docker image ...'
-dir('.') {
-sh "docker build --no-cache -t kuzma343/website ."
-}
-}
-}
+  stage("Run zabbix-agent") {
+            steps {
+                echo 'Running zabbix-agent service ...'
+                sh "docker run -d --name zabbix-agent -p 161:161/udp -p 10050:10050 -p 1099:1099 -p 9999:9999 kuzma343/zabbix-agent:alpine-6.2-latest"
+            }
+        }
 
-stage("Run mariadb container") {
-steps {
-sh "docker run -d \
---name mariadb \
--e MYSQL_ROOT_PASSWORD=your_root_password \
--e MYSQL_USER=your_user \
--e MYSQL_PASSWORD=your_password \
--e MYSQL_DATABASE=your_database_name \
--p 3306:3306 \
-kuzma343/mariadb:10.5"
-}
-}
-      stage("Create and Run Zabbix Agent Docker Container") {
-steps {
-echo 'Creating and running Zabbix Agent Docker container...'
-dir('.') {
-sh "docker run -d
---name zabbix-server
--e DB_SERVER_HOST=mariadb
--e MYSQL_USER=your_user
--e MYSQL_PASSWORD=your_password
--e MYSQL_DATABASE=your_database_name
--p 10051:10051
-kuzma343/zabbix-server-mysql:alpine-6.2-latest"
-}
-}
-}
-      
-stage("Create and run Zabbix web container") {
-    steps {
-        echo 'Creating and running Zabbix web container...'
-        sh '''
-            docker run -d \
-              --name zabbix-web \
-              -e DB_SERVER_HOST=mariadb \
-              -e MYSQL_USER=your_user \
-              -e MYSQL_PASSWORD=your_password \
-              -e MYSQL_DATABASE=your_database_name \
-              -e ZBX_SERVER_HOST=zabbix-server \
-              -p 8080:8080 \
-              -p 443:443 \
-              kuzma343/zabbix-web-nginx-mysql:alpine-6.2-latest
-        '''
-    }
-}
+        stage("Run mariadb") {
+            steps {
+                echo 'Running mariadb service ...'
+                sh "docker run -d --name mariadb -e MYSQL_ROOT_PASSWORD=your_root_password -e MYSQL_USER=your_user -e MYSQL_PASSWORD=your_password -e MYSQL_DATABASE=your_database_name -p 3306:3306 kuzma343/mariadb:10.5"
+            }
+        }
+
+        stage("Run zabbix-server") {
+            steps {
+                echo 'Running zabbix-server service ...'
+                sh "docker run -d --name zabbix-server -e DB_SERVER_HOST=mariadb -e MYSQL_USER=your_user -e MYSQL_PASSWORD=your_password -e MYSQL_DATABASE=your_database_name -p 10051:10051 kuzma343/zabbix-server-mysql:alpine-6.2-latest"
+            }
+        }
+
+        stage("Run zabbix-web") {
+            steps {
+                echo 'Running zabbix-web service ...'
+                sh "docker run -d --name zabbix-web -e DB_SERVER_HOST=mariadb -e MYSQL_USER=your_user -e MYSQL_PASSWORD=your_password -e MYSQL_DATABASE=your_database_name -e ZBX_SERVER_HOST=zabbix-server -p 8080:8080 -p 443:443 kuzma343/zabbix-web-nginx-mysql:alpine-6.2-latest"
+            }
+        }
 
         stage("docker login") {
             steps {
