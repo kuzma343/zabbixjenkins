@@ -65,22 +65,23 @@ kuzma343/zabbix-server-mysql:alpine-6.2-latest"
 }
       
 stage("Create and run Zabbix web container") {
-steps {
-echo 'Creating and running Zabbix web container...'
-sh '''
-docker run -d
---name zabbix-web
--e DB_SERVER_HOST=mariadb
--e MYSQL_USER=your_user
--e MYSQL_PASSWORD=your_password
--e MYSQL_DATABASE=your_database_name
--e ZBX_SERVER_HOST=zabbix-server
--p 8080:8080
--p 443:443
-kuzma343/zabbix-web-nginx-mysql:alpine-6.2-latest
-'''
+    steps {
+        echo 'Creating and running Zabbix web container...'
+        sh '''
+            docker run -d \
+              --name zabbix-web \
+              -e DB_SERVER_HOST=mariadb \
+              -e MYSQL_USER=your_user \
+              -e MYSQL_PASSWORD=your_password \
+              -e MYSQL_DATABASE=your_database_name \
+              -e ZBX_SERVER_HOST=zabbix-server \
+              -p 8080:8080 \
+              -p 443:443 \
+              kuzma343/zabbix-web-nginx-mysql:alpine-6.2-latest
+        '''
+    }
 }
-}
+
         stage("docker login") {
             steps {
                 echo " ============== docker login =================="
