@@ -11,7 +11,7 @@ pipeline {
                 sh 'docker rm -f zabbix-server' // Видалення попереднього контейнера з назвою "zabbix-server"
                 sh 'docker run -d --name zabbix-server -e DB_SERVER_HOST=mariadb -e MYSQL_USER=your_user -e MYSQL_PASSWORD=your_password -e MYSQL_DATABASE=your_database_name -p 10051:10051 kuzma343/zabbix-server-mysql:alpine-6.2-latest'
                 sh 'docker rm -f zabbix-web' // Видалення попереднього контейнера з назвою "zabbix-web"
-                sh 'docker run -d --name zabbix-web -e DB_SERVER_HOST=mariadb -e MYSQL_USER=your_user -e MYSQL_PASSWORD=your_password -e MYSQL_DATABASE=your_database_name -e ZBX_SERVER_HOST=zabbix-server -p 8787:8080 -p 443:443 kuzma343/zabbix-web'
+                sh 'docker run -d --name zabbix-web-nginx-mysql -e DB_SERVER_HOST=mariadb -e MYSQL_USER=your_user -e MYSQL_PASSWORD=your_password -e MYSQL_DATABASE=your_database_name -e ZBX_SERVER_HOST=zabbix-server -p 8787:8080 -p 443:443 kuzma343/zabbix-web-nginx-mysql'
             }
         }
     }
