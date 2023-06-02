@@ -16,7 +16,7 @@ pipeline  {
   stage("Run zabbix-agent") {
             steps {
                 echo 'Running zabbix-agent service ...'
-                sh "docker run -d --name zabbix-agent -p 161:161/udp -p 10050:10050 -p 1099:1099 -p 9999:9999 kuzma343/zabbix-agent:alpine-6.2-latest"
+                sh "docker run -d --name zabbix-agent -p 161:161/udp  kuzma343/zabbix-agent:alpine-6.2-latest"
             }
         }
 
