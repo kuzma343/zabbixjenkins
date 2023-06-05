@@ -22,7 +22,7 @@ pipeline {
                         def mariadb = docker.image('kuzma343/mariadb:10.5').run('-d -p 3306:3306')
                         def zabbixAgent = docker.image('kuzma343/zabbix-agent:alpine-6.2-latest').run('-d')
                         def zabbixServer = docker.image('kuzma343/zabbix-server-mysql:alpine-6.2-latest').run('-d')
-                        def zabbixWeb = docker.image('kuzma343/zabbix-web-nginx-mysql:alpine-6.2-latest').run('-d -p 8080:80')
+                        def zabbixWeb = docker.image('kuzma343/zabbix-web-nginx-mysql:alpine-6.2-latest').run('-d -p 8080:8787')
                         
                         // Отримання ID контейнерів
                         def mariadbContainerId = mariadb.id
