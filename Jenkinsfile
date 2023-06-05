@@ -40,13 +40,7 @@ pipeline {
             }
         }
         
-        stage('Test') {
-            steps {
-                script {
-                    // Виконання тестів, якщо необхідно
-                }
-            }
-        }
+      
         
         stage('Cleanup') {
             steps {
