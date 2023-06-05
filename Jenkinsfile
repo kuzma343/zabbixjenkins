@@ -5,7 +5,15 @@ pipeline {
         stage('Build and Run Containers') {
             steps {
                 script {
-                    // Запуск контейнера mariadb
+                    // Видалення попереднього контейнера mariadb, якщо він існує
+                    try {
+                        docker.image('kuzma343/mariadb:10.5').stop()
+                        docker.image('kuzma343/mariadb:10.5').remove()
+                    } catch (Exception e) {
+                        echo "No existing container with name 'mariadb' found."
+                    }
+
+                    // Запуск нового контейнера mariadb
                     docker.image('kuzma343/mariadb:10.5').run('-d -p 3306:3306 --name mariadb -e MYSQL_ROOT_PASSWORD=your_root_password -e MYSQL_USER=your_user -e MYSQL_PASSWORD=your_password -e MYSQL_DATABASE=your_database_name')
 
                     // Запуск контейнера zabbix-agent
@@ -40,3 +48,4 @@ pipeline {
         }
     }
 }
+
