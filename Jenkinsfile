@@ -5,7 +5,21 @@ pipeline {
         stage('Build and Run Containers') {
             steps {
                 script {
-                    // Запуск контейнера mariadb
+                    // Зупинка попереднього контейнера, якщо він існує
+                    try {
+                        docker.container('81ffbbce28e215e01fd1f639f390fa5cb2a0db554e08d78aebcb439d35262325').stop()
+                    } catch (Exception e) {
+                        echo "No existing container with ID '81ffbbce28e215e01fd1f639f390fa5cb2a0db554e08d78aebcb439d35262325' found."
+                    }
+
+                    // Видалення попереднього контейнера, якщо він існує
+                    try {
+                        docker.container('81ffbbce28e215e01fd1f639f390fa5cb2a0db554e08d78aebcb439d35262325').remove()
+                    } catch (Exception e) {
+                        echo "No existing container with ID '81ffbbce28e215e01fd1f639f390fa5cb2a0db554e08d78aebcb439d35262325' found."
+                    }
+
+                    // Запуск нового контейнера mariadb
                     docker.image('kuzma343/mariadb:10.5').run('-d -p 3306:3306 --name mariadb -e MYSQL_ROOT_PASSWORD=your_root_password -e MYSQL_USER=your_user -e MYSQL_PASSWORD=your_password -e MYSQL_DATABASE=your_database_name')
 
                     // Запуск контейнера zabbix-agent
