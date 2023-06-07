@@ -2,54 +2,37 @@ pipeline {
     agent any
 
     stages {
-        stage('Build and Run Containers') {
+        stage('Build and Push') {
             steps {
                 script {
-                    // Зупинка попереднього контейнера, якщо він існує
-                    try {
-                        docker.container('81ffbbce28e215e01fd1f639f390fa5cb2a0db554e08d78aebcb439d35262325').stop()
-                    } catch (Exception e) {
-                        echo "No existing container with ID '81ffbbce28e215e01fd1f639f390fa5cb2a0db554e08d78aebcb439d35262325' found."
+                    def dockerImage = 'kuzma343'
+                    def dockerTag = 'alpine-6.2-latest'
+                    def repoName = 'zabbixrepo'
+
+                    // Build and push zabbix-agent container
+                    docker.build("${dockerImage}/zabbix-agent:${dockerTag}", "--build-arg ZABBIX_VERSION=6.2 ${dockerImage}/zabbix-agent:${dockerTag}")
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+                        docker.image("${dockerImage}/zabbix-agent:${dockerTag}").push()
                     }
 
-                    // Видалення попереднього контейнера, якщо він існує
-                    try {
-                        docker.container('81ffbbce28e215e01fd1f639f390fa5cb2a0db554e08d78aebcb439d35262325').remove()
-                    } catch (Exception e) {
-                        echo "No existing container with ID '81ffbbce28e215e01fd1f639f390fa5cb2a0db554e08d78aebcb439d35262325' found."
+                    // Build and push mariadb container
+                    docker.build("${dockerImage}/mariadb:${dockerTag}", "${dockerImage}/mariadb:${dockerTag}")
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+                        docker.image("${dockerImage}/mariadb:${dockerTag}").push()
                     }
 
-                    
-                    docker.image('kuzma343/mariadb:10.5').run('-d -p 3306:3306 --name mariadb -e MYSQL_ROOT_PASSWORD=your_root_password -e MYSQL_USER=your_user -e MYSQL_PASSWORD=your_password -e MYSQL_DATABASE=your_database_name')
+                    // Build and push zabbix-server-mysql container
+                    docker.build("${dockerImage}/zabbix-server-mysql:${dockerTag}", "--build-arg ZABBIX_VERSION=6.2 ${dockerImage}/zabbix-server-mysql:${dockerTag}")
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+                        docker.image("${dockerImage}/zabbix-server-mysql:${dockerTag}").push()
+                    }
 
-                    
-                    docker.image('kuzma343/zabbix-agent:alpine-6.2-latest').run('-d --link mariadb:mysql --name zabbix-agent')
-
-                   
-                    docker.image('kuzma343/zabbix-server-mysql:alpine-6.2-latest').run('-d --link mariadb:mysql --name zabbix-server-mysql -e DB_SERVER_HOST=mariadb -e MYSQL_USER=your_user -e MYSQL_PASSWORD=your_password -e MYSQL_DATABASE=your_database_name -p 10051:10051')
-
-                    
-                    docker.image('kuzma343/zabbix-web-nginx-mysql:alpine-6.2-latest').run('-d --link zabbix-server-mysql:zabbix-server-mysql --name zabbix-web-nginx-mysql -e DB_SERVER_HOST=mariadb -e MYSQL_USER=your_user -e MYSQL_PASSWORD=your_password -e MYSQL_DATABASE=your_database_name -e ZBX_SERVER_HOST=zabbix-server -p 8080:8787 -p 443:443')
+                    // Build and push zabbix-web-nginx-mysql container
+                    docker.build("${dockerImage}/zabbix-web-nginx-mysql:${dockerTag}", "--build-arg ZABBIX_VERSION=6.2 ${dockerImage}/zabbix-web-nginx-mysql:${dockerTag}")
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+                        docker.image("${dockerImage}/zabbix-web-nginx-mysql:${dockerTag}").push()
+                    }
                 }
-            }
-        }
-    }
-
-    post {
-        always {
-            // Видалення контейнерів після завершення
-            script {
-                docker.image('kuzma343/mariadb:10.5').stop()
-                docker.image('kuzma343/mariadb:10.5').remove()
-
-                docker.image('kuzma343/zabbix-agent:alpine-6.2-latest').stop()
-                docker.image('kuzma343/zabbix-agent:alpine-6.2-latest').remove()
-
-                docker.image('kuzma343/zabbix-server-mysql:alpine-6.2-latest').stop()
-                docker.image('kuzma343/zabbix-server-mysql:alpine-6.2-latest').remove()
-
-                docker.image('kuzma343/zabbix-web-nginx-mysql:alpine-6.2-latest').stop()
-                docker.image('kuzma343/zabbix-web-nginx-mysql:alpine-6.2-latest').remove()
             }
         }
     }
