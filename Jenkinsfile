@@ -2,38 +2,41 @@ pipeline {
     agent any
 
     stages {
-        stage('Build and Push Zabbix Agent') {
+        stage('Build and Push') {
             steps {
                 script {
-                    docker.image('kuzma343/zabbix-agent:alpine-6.2-latest').pull()
-                    docker.image('kuzma343/zabbix-agent:alpine-6.2-latest').push('kuzma343/zabbixrepo')
-                }
-            }
-        }
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+                        def agentImage = docker.image('kuzma343/zabbix-agent:alpine-6.2-latest')
+                        def mariadbImage = docker.image('kuzma343/mariadb:10.5')
+                        def serverImage = docker.image('kuzma343/zabbix-server-mysql:alpine-6.2-latest')
+                        def webImage = docker.image('kuzma343/zabbix-web-nginx-mysql:alpine-6.2-latest')
+                        def repoImage = docker.image('kuzma343/zabbixrepo')
 
-        stage('Build and Push MariaDB') {
-            steps {
-                script {
-                    docker.image('kuzma343/mariadb:10.5').pull()
-                    docker.image('kuzma343/mariadb:10.5').push('kuzma343/zabbixrepo')
-                }
-            }
-        }
+                        def agentContainer = agentImage.run()
+                        def mariadbContainer = mariadbImage.run()
+                        def serverContainer = serverImage.run(linkedContainers: [mariadbContainer])
+                        def webContainer = webImage.run(linkedContainers: [mariadbContainer, serverContainer])
 
-        stage('Build and Push Zabbix Server') {
-            steps {
-                script {
-                    docker.image('kuzma343/zabbix-server-mysql:alpine-6.2-latest').pull()
-                    docker.image('kuzma343/zabbix-server-mysql:alpine-6.2-latest').push('kuzma343/zabbixrepo')
-                }
-            }
-        }
+                        // Зупинити і видалити попередні контейнери з репозиторію Docker Hub
+                        repoImage.inside {
+                            sh 'docker stop $(docker ps -a -q)'
+                            sh 'docker rm $(docker ps -a -q)'
+                        }
 
-        stage('Build and Push Zabbix Web Nginx') {
-            steps {
-                script {
-                    docker.image('kuzma343/zabbix-web-nginx-mysql:alpine-6.2-latest').pull()
-                    docker.image('kuzma343/zabbix-web-nginx-mysql:alpine-6.2-latest').push('kuzma343/zabbixrepo')
+                        // Створити образ з об'єднаними контейнерами
+                        def mergedImage = docker.build('kuzma343/zabbixrepo')
+                        mergedImage.push()
+
+                        // Зупинити і видалити тимчасові контейнери
+                        agentContainer.stop()
+                        agentContainer.remove()
+                        mariadbContainer.stop()
+                        mariadbContainer.remove()
+                        serverContainer.stop()
+                        serverContainer.remove()
+                        webContainer.stop()
+                        webContainer.remove()
+                    }
                 }
             }
         }
